@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #E9F5F6;
+  --color-brand-100: #CBEBEB;
+  --color-brand-200: #A4DEE0;
+  --color-brand-300: #73CDD0;
+  --color-brand-400: #40B9BD;
+  --color-brand-500: #10A8AB;
+  --color-brand-600: #0F888B;
+  --color-brand-700: #0E6B6C;
+  --color-brand-800: #0C5355;
+  --color-brand-900: #035062;
+  --color-brand: #10A8AB;
+  --color-brand-light: #E9F5F6;
+  --color-brand-dark: #035062;
+}
+
+@layer base {
+  body {
+    @apply bg-[#F9FAFB] text-slate-800 antialiased;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  }
+}

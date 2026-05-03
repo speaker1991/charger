@@ -1,0 +1,2 @@
+#!/bin/sh
+mosquitto_pub -t "stations/1/status" -m '{"station_id":1,"charging_active":true,"current_power":3.75,"current_kwh":4.52,"pistol":"B","uptime_seconds":86400,"free_heap":245760,"wifi_rssi":-65}'

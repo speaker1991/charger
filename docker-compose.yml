@@ -1,0 +1,104 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: charging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init_app_user.sql:/docker-entrypoint-initdb.d/10_app_user.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-charging}
+      DB_USER: ${DB_USER:-app_user}
+      DB_PASSWORD: ${DB_PASSWORD:-change_me_strong}
+      API_KEY: ${API_KEY}
+      MQTT_HOST: ${MQTT_HOST:-mqtt}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request,sys; url='http://localhost:8000/healthz'; key=os.environ.get('API_KEY',''); req=urllib.request.Request(url, headers={'X-API-Key': key}); resp=urllib.request.urlopen(req, timeout=5); sys.exit(0 if getattr(resp, 'status', 200)==200 else 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build:
+      context: ./bot
+    profiles: ["bot"]
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-charging}
+      DB_USER: ${DB_USER:-app_user}
+      DB_PASSWORD: ${DB_PASSWORD:-change_me_strong}
+      BOT_TOKEN: ${BOT_TOKEN}
+      BOT_ALLOWED_USERNAMES: ${BOT_ALLOWED_USERNAMES}
+      API_URL: ${API_URL:-http://api:8000}
+      API_KEY: ${API_KEY}
+      MQTT_HOST: ${MQTT_HOST:-mqtt}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    depends_on:
+      - api
+      - mqtt
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_MQTT_URL=ws://localhost:9001
+
+volumes:
+  pgdata:
+  mosquitto_data:
+  mosquitto_log:

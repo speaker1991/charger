@@ -1,0 +1,12 @@
+# Унифицируем переводы строк для Linux-контейнеров
+* text=auto eol=lf
+
+# Скрипты и исходники
+*.sh text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Dockerfiles
+Dockerfile text eol=lf
+bot/Dockerfile text eol=lf

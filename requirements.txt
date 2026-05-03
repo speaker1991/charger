@@ -1,0 +1,13 @@
+fastapi==0.115.2
+uvicorn[standard]==0.30.6
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.9
+pydantic==2.9.2
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+alembic==1.13.2
+graphviz==0.20.3
+aiomqtt==2.3.0
+PyJWT==2.9.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
